@@ -678,8 +678,10 @@ function initAuth(){
   });
 }
 
-if(window._fbReady){
-  initAuth();
-} else {
-  window.addEventListener('fbready', initAuth);
-}
+document.addEventListener("DOMContentLoaded",function(){
+  if(window._fbReady){
+    initAuth();
+  } else {
+    window.addEventListener("fbready", initAuth);
+  }
+});

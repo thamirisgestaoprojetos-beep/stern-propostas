@@ -178,7 +178,7 @@ td input:focus,td select:focus{border-color:var(--sb);background:#fff;outline:no
       <input type="password" id="rpw" placeholder="Senha (mín. 6 caracteres)">
       <button class="abtn" onclick="doReg()">Criar conta</button>
     </div>
-    <div class="dhint">💡 Modo teste — dados salvos no navegador</div>
+    <div class="dhint" id="fb-hint" style="display:none">💡 Modo teste — dados salvos no navegador</div>
   </div>
 </div>
 
@@ -193,7 +193,7 @@ td input:focus,td select:focus{border-color:var(--sb);background:#fff;outline:no
       <div class="hb"><h1>STERN</h1><p>Controle de Propostas</p></div>
     </div>
     <div class="hr">
-      <span class="dbadge">MODO TESTE</span>
+      <span class="dbadge" id="fb-badge" style="display:none">MODO TESTE</span>
       <span class="ui" id="udsp"></span>
       <button class="lout" onclick="doLogout()">Sair</button>
     </div>
@@ -431,6 +431,6 @@ window._fbFns = { doc, setDoc, getDoc, signInWithEmailAndPassword, signOut, onAu
 window._fbReady = true;
 window.dispatchEvent(new Event('fbready'));
 </script>
-<script src="app_fixed.js" defer></script>
+<script src="app_fixed.js"></script>
 </body>
 </html>
