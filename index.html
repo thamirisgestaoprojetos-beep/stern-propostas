@@ -410,6 +410,27 @@ td input:focus,td select:focus{border-color:var(--sb);background:#fff;outline:no
   </div>
 </div>
 
-<script type="module" src="app_fixed.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD_glvKoNKjp3YyqCR4cGvaUfvvT1QlB7E",
+  authDomain: "stern-proposta.firebaseapp.com",
+  projectId: "stern-proposta",
+  storageBucket: "stern-proposta.firebasestorage.app",
+  messagingSenderId: "907338675746",
+  appId: "1:907338675746:web:66a7682ffa702d6a9afc7b"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+window._db = getFirestore(fbApp);
+window._auth = getAuth(fbApp);
+window._fbFns = { doc, setDoc, getDoc, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+window._fbReady = true;
+window.dispatchEvent(new Event('fbready'));
+</script>
+<script src="app_fixed.js" defer></script>
 </body>
 </html>

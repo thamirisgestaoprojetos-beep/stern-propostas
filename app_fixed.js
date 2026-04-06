@@ -1,22 +1,11 @@
 // STERN — app.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD_glvKoNKjp3YyqCR4cGvaUfvvT1QlB7E",
-  authDomain: "stern-proposta.firebaseapp.com",
-  projectId: "stern-proposta",
-  storageBucket: "stern-proposta.firebasestorage.app",
-  messagingSenderId: "907338675746",
-  appId: "1:907338675746:web:66a7682ffa702d6a9afc7b"
-};
-
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
-const auth = getAuth(fbApp);
-
 const LS={get:k=>{try{return JSON.parse(localStorage.getItem('stern_'+k));}catch(e){return null;}},set:(k,v)=>localStorage.setItem('stern_'+k,JSON.stringify(v))};
+
+function getDB(){return window._db;}
+function getAuth2(){return window._auth;}
+function fbDoc(...a){return window._fbFns.doc(...a);}
+function fbSetDoc(...a){return window._fbFns.setDoc(...a);}
+function fbGetDoc(...a){return window._fbFns.getDoc(...a);}
 
 let proposals=[],nextNum=1,isRev=false,revBase=null;
 let chartInst={},sKey='numSort',sDir=-1,blSKey='numSort',blSDir=-1;
@@ -59,7 +48,7 @@ function doLogin(){
   const err=document.getElementById('aerr');
   if(!em||!pw){err.textContent='Preencha e-mail e senha.';err.style.display='block';return;}
   err.style.display='none';
-  signInWithEmailAndPassword(auth,em,pw)
+  window._fbFns.signInWithEmailAndPassword(getAuth2(),em,pw)
     .then(uc=>{currentUser={email:uc.user.email,name:uc.user.email.split('@')[0]};startApp();})
     .catch(()=>{err.textContent='E-mail ou senha incorretos.';err.style.display='block';});
 }
@@ -68,7 +57,7 @@ function doReg(){
   err.textContent='Cadastro de novos usuários é feito pelo administrador do sistema.';err.style.display='block';
 }
 function doLogout(){
-  signOut(auth);
+  window._fbFns.signOut(getAuth2());
   currentUser=null;
   document.getElementById('app').style.display='none';
   document.getElementById('auth').style.display='flex';
@@ -79,9 +68,9 @@ async function startApp(){
   document.getElementById('auth').style.display='none';
   document.getElementById('app').style.display='flex';
   document.getElementById('udsp').textContent=currentUser.name||currentUser.email;
-  const cfgDoc=await getDoc(doc(db,'stern','config'));
+  const cfgDoc=await fbGetDoc(fbDoc(getDB(),'stern','config'));
   if(cfgDoc.exists())cfg={...cfg,...cfgDoc.data()};
-  const propDoc=await getDoc(doc(db,'stern','proposals'));
+  const propDoc=await fbGetDoc(fbDoc(getDB(),'stern','proposals'));
   if(propDoc.exists()&&propDoc.data().list&&propDoc.data().list.length>0){
     proposals=propDoc.data().list;
   } else {
@@ -94,8 +83,8 @@ async function startApp(){
   document.getElementById('ddt').value=today;
   updNN();popG();renderColCfg();renderGTags();renderSTags();
 }
-function saveProp(){setDoc(doc(db,'stern','proposals'),{list:proposals}).catch(e=>console.error('saveProp:',e));}
-function saveCfg(){setDoc(doc(db,'stern','config'),cfg).catch(e=>console.error('saveCfg:',e));}
+function saveProp(){fbSetDoc(fbDoc(getDB(),'stern','proposals'),{list:proposals}).catch(e=>console.error('saveProp:',e));}
+function saveCfg(){fbSetDoc(fbDoc(getDB(),'stern','config'),cfg).catch(e=>console.error('saveCfg:',e));}
 function updNN(){
   const mx=proposals.reduce((m,p)=>Math.max(m,parseInt(p.num)||0),0);
   nextNum=mx+1;
@@ -676,8 +665,8 @@ function downloadDashImg(){
 }
 
 // ── BOOT ─────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded',()=>{
-  onAuthStateChanged(auth, user=>{
+function initAuth(){
+  window._fbFns.onAuthStateChanged(getAuth2(), user=>{
     if(user){
       currentUser={email:user.email,name:user.email.split('@')[0]};
       startApp();
@@ -687,4 +676,10 @@ document.addEventListener('DOMContentLoaded',()=>{
       swTab('login', document.querySelector('.atab'));
     }
   });
-});
+}
+
+if(window._fbReady){
+  initAuth();
+} else {
+  window.addEventListener('fbready', initAuth);
+}
