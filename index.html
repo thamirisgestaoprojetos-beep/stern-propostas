@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STERN — Controle de Propostas</title>
+<script src="dados.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{--sd:#0d2e4a;--sm:#14527a;--sb:#1a7ab5;--sc:#00b4d8;--sl:#e8f4fd;--st:#1a2733;--sg:#5a7a90;--se:#d0e4f0;--bg:#f0f6fa;--wh:#fff;--r:8px;--rl:12px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--st);font-size:14px;}
+/* AUTH */
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--sd) 0%,var(--sm) 60%,var(--sb) 100%);}
+.ac{background:#fff;border-radius:var(--rl);padding:40px 36px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.al{text-align:center;margin-bottom:28px;}.al h1{font-size:26px;font-weight:700;color:var(--sd);letter-spacing:.06em;margin-top:8px;}
+.al p{font-size:11px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;}
+.atabs{display:flex;gap:2px;margin-bottom:24px;background:var(--bg);border-radius:var(--r);padding:3px;}
+.atab{flex:1;padding:8px;text-align:center;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--sg);border:none;background:none;}
+.atab.active{background:#fff;color:var(--sd);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.af{display:flex;flex-direction:column;gap:12px;}
+.af input{padding:11px 14px;border-radius:var(--r);border:1.5px solid var(--se);font-size:14px;color:var(--st);width:100%;}
+.af input:focus{outline:none;border-color:var(--sb);}
+.abtn{padding:12px;border-radius:var(--r);border:none;background:var(--sd);color:#fff;font-size:14px;font-weight:600;cursor:pointer;}
+.abtn:hover{background:var(--sm);}
+.aerr{background:#fee2e2;color:#991b1b;padding:10px 12px;border-radius:var(--r);font-size:13px;display:none;margin-bottom:8px;}
+.dhint{margin-top:14px;background:#e8f4fd;border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--sm);text-align:center;}
+/* SHELL */
+#app{display:none;flex-direction:column;height:100vh;}
+.hdr{background:var(--sd);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;border-bottom:2px solid var(--sc);}
+.hl{display:flex;align-items:center;gap:10px;}
+.hb h1{color:#fff;font-size:15px;font-weight:700;letter-spacing:.05em;}
+.hb p{color:var(--sc);font-size:10px;letter-spacing:.09em;text-transform:uppercase;}
+.hr{display:flex;align-items:center;gap:12px;}
+.ui{color:rgba(255,255,255,.7);font-size:12px;}
+.dbadge{background:var(--sc);color:var(--sd);font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;}
+.lout{padding:5px 12px;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.8);font-size:12px;cursor:pointer;}
+.lout:hover{background:rgba(255,255,255,.1);}
+.nav{background:var(--sm);display:flex;padding:0 20px;overflow-x:auto;flex-shrink:0;}
+.nb{padding:11px 18px;color:rgba(255,255,255,.65);font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;}
+.nb:hover{color:#fff;background:rgba(255,255,255,.07);}
+.nb.active{color:#fff;border-bottom-color:var(--sc);}
+.content{flex:1;overflow-y:auto;padding:20px;}
+/* CARDS */
+.card{background:#fff;border-radius:var(--rl);border:1px solid var(--se);padding:18px 20px;margin-bottom:16px;}
+.slbl{font-size:12px;font-weight:700;color:var(--sd);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--sc);}
+/* FORMS */
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;}
+.fi{display:flex;flex-direction:column;gap:4px;}
+.fi label{font-size:11px;font-weight:600;color:var(--sg);text-transform:uppercase;letter-spacing:.04em;}
+.fi input,.fi select{padding:9px 11px;border-radius:var(--r);border:1.5px solid var(--se);background:#fff;color:var(--st);font-size:13px;font-family:inherit;}
+.fi input:focus,.fi select:focus{outline:none;border-color:var(--sb);}
+.fi input.err{border-color:#ef4444;}
+.otag{font-size:9px;background:var(--bg);color:var(--sg);padding:1px 5px;border-radius:4px;margin-left:4px;letter-spacing:0;font-weight:400;text-transform:none;}
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:var(--r);border:1.5px solid var(--se);background:#fff;color:var(--st);font-size:13px;font-weight:500;cursor:pointer;}
+.btn:hover{background:var(--bg);}
+.btn.pr{background:var(--sd);color:#fff;border-color:var(--sd);}
+.btn.pr:hover{background:var(--sm);}
+.btn.gr{background:#166534;color:#fff;border-color:#166534;}
+.btn.sm{padding:5px 11px;font-size:12px;}
+.btn.dng{background:#991b1b;color:#fff;border-color:#991b1b;font-size:11px;padding:4px 9px;}
+/* NUM BOX */
+.nbox{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--sl);border-radius:var(--rl);border:2px solid var(--sc);margin-bottom:16px;}
+.nval{font-size:36px;font-weight:700;color:var(--sd);}
+.nlbl{font-size:11px;color:var(--sg);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+.rvbox{background:#dbeafe;border-radius:var(--r);padding:8px 14px;font-size:13px;color:#1e40af;font-weight:500;display:none;align-items:center;gap:10px;margin-bottom:14px;}
+/* ALERTS */
+.alert{padding:11px 14px;border-radius:var(--r);font-size:13px;font-weight:500;display:none;margin-bottom:14px;}
+.alert.ok{background:#dcfce7;color:#166534;}
+.alert.wn{background:#fef3c7;color:#92400e;}
+/* TABLE */
+.ttbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;}
+.ttbar input,.ttbar select{padding:7px 10px;border-radius:var(--r);border:1.5px solid var(--se);font-size:13px;background:#fff;color:var(--st);}
+.ttbar input{min-width:180px;}
+.twrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--se);}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:800px;}
+thead tr.hrow{background:var(--sd);}
+thead tr.frow{background:#1a3f5a;}
+th{padding:8px 10px;color:rgba(255,255,255,.9);font-weight:600;font-size:11px;text-align:left;white-space:nowrap;letter-spacing:.04em;user-select:none;}
+th.s{cursor:pointer;}
+th.s:hover{background:var(--sm);}
+.frow th{padding:3px 6px;}
+.frow th input,.frow th select{width:100%;padding:4px 6px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:11px;outline:none;}
+.frow th input::placeholder{color:rgba(255,255,255,.45);}
+.frow th select option{background:var(--sd);color:#fff;}
+td{padding:7px 10px;border-bottom:1px solid #edf2f7;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f7fbff;}
+td input,td select{width:100%;padding:4px 7px;border-radius:4px;border:1.5px solid transparent;background:transparent;color:var(--st);font-size:12px;min-width:80px;}
+td input:focus,td select:focus{border-color:var(--sb);background:#fff;outline:none;}
+.tfoot{font-size:12px;color:var(--sg);padding:8px 2px;}
+.rvtag{background:#dbeafe;color:#1e40af;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;font-weight:600;}
+.venc{color:#166534;font-weight:700;}
+.perd{color:#991b1b;font-weight:700;}
+/* DASH */
+.dff{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;padding:14px 18px;background:#fff;border-radius:var(--rl);border:1px solid var(--se);}
+.dff label{font-size:11px;font-weight:600;color:var(--sg);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em;}
+.dff input,.dff select{padding:7px 10px;border-radius:var(--r);border:1.5px solid var(--se);font-size:13px;background:#fff;color:var(--st);}
+.mg{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;margin-bottom:18px;}
+.mc{background:#fff;border:1px solid var(--se);border-radius:var(--rl);padding:14px 16px;border-left:4px solid var(--sc);}
+.mv{font-size:21px;font-weight:700;color:var(--sd);}
+.ml{font-size:11px;color:var(--sg);margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.cbox{background:#fff;border:1px solid var(--se);border-radius:var(--rl);padding:16px;}
+.ct{font-size:12px;font-weight:700;color:var(--sg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;}
+.cwrap{position:relative;height:220px;}
+/* CONFIG */
+.cfl{list-style:none;}
+.cfi{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f0f4f8;font-size:13px;}
+.cfi input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--sb);}
+.cfi label{cursor:pointer;flex:1;}
+.ftag{font-size:10px;color:var(--sg);background:var(--bg);padding:2px 6px;border-radius:4px;}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.tag{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:var(--bg);border:1px solid var(--se);font-size:12px;}
+.tag button{border:none;background:none;color:var(--sg);cursor:pointer;font-size:14px;line-height:1;padding:0;}
+.tag button:hover{color:#991b1b;}
+/* IMPORT MODAL */
+.mov{position:fixed;inset:0;background:rgba(13,46,74,.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:#fff;border-radius:var(--rl);width:100%;max-width:660px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.25);}
+.mhdr{padding:16px 20px;border-bottom:1px solid var(--se);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.mhdr h2{font-size:16px;font-weight:700;color:var(--sd);}
+.mcls{background:none;border:none;font-size:22px;cursor:pointer;color:var(--sg);line-height:1;padding:2px 6px;}
+.mbdy{padding:18px 20px;overflow-y:auto;flex:1;}
+.mftr{padding:12px 20px;border-top:1px solid var(--se);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;}
+.dz{border:2px dashed var(--se);border-radius:var(--rl);padding:32px 20px;text-align:center;cursor:pointer;background:var(--bg);}
+.dz:hover{border-color:var(--sb);background:var(--sl);}
+.dz p{font-size:14px;color:var(--sg);margin:8px 0 4px;}
+.dz span{font-size:12px;color:var(--sg);}
+.dz input[type=file]{display:none;}
+.isum{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
+.ist{background:var(--bg);border-radius:var(--r);padding:8px 14px;}
+.ist strong{color:var(--sd);font-size:16px;display:block;}
+.ist span{color:var(--sg);font-size:11px;}
+.mdbtn{display:flex;gap:8px;margin:12px 0;}
+.mbtn{flex:1;padding:9px;border-radius:var(--r);border:2px solid var(--se);background:#fff;cursor:pointer;font-size:12px;font-weight:500;color:var(--sg);text-align:center;}
+.mbtn.sel{border-color:var(--sb);background:var(--sl);color:var(--sd);}
+.mbtn b{display:block;font-size:13px;margin-bottom:2px;}
+.mbtn small{font-size:11px;color:var(--sg);}
+.pw{max-height:180px;overflow-y:auto;border-radius:var(--r);border:1px solid var(--se);}
+.pw table{min-width:400px;font-size:11px;}
+.pw th{font-size:10px;padding:5px 8px;}
+.pw td{padding:4px 8px;}
+.iwrn{background:#fef3c7;border:1px solid #fde68a;border-radius:var(--r);padding:9px 12px;font-size:12px;color:#92400e;margin-top:10px;display:none;}
+.iok{background:#dcfce7;border:1px solid #bbf7d0;border-radius:var(--r);padding:9px 12px;font-size:12px;color:#166534;margin-top:10px;display:none;}
+/* BACKLOG */
+.bl100{color:#166534;font-weight:700;}
+@media(max-width:700px){.cg{grid-template-columns:1fr;}.fg{grid-template-columns:1fr;}.mg{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="ac">
+    <div class="al">
+      <svg width="54" height="54" viewBox="0 0 100 100" fill="none">
+        <polygon points="50,5 62,35 96,35 69,56 79,90 50,69 21,90 31,56 4,35 38,35" fill="#14527a"/>
+        <polygon points="50,5 62,35 96,35 69,56 79,90 50,69" fill="#00b4d8"/>
+      </svg>
+      <h1>STERN</h1><p>Soluções em Serviços Integrados</p>
+    </div>
+    <div class="atabs">
+      <button class="atab active" onclick="swTab('login', this)">Entrar</button>
+      <button class="atab" onclick="swTab('register', this)">Cadastrar</button>
+    </div>
+    <div id="aerr" class="aerr"></div>
+    <div id="lform" class="af">
+      <input type="email" id="lem" placeholder="E-mail">
+      <input type="password" id="lpw" placeholder="Senha">
+      <button class="abtn" onclick="doLogin()">Entrar</button>
+    </div>
+    <div id="rform" class="af" style="display:none">
+      <input type="text" id="rnm" placeholder="Nome completo">
+      <input type="email" id="rem" placeholder="E-mail">
+      <input type="password" id="rpw" placeholder="Senha (mín. 6 caracteres)">
+      <button class="abtn" onclick="doReg()">Criar conta</button>
+    </div>
+    <div class="dhint">💡 Modo teste — dados salvos no navegador</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="hdr">
+    <div class="hl">
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+        <polygon points="50,5 62,35 96,35 69,56 79,90 50,69 21,90 31,56 4,35 38,35" fill="rgba(255,255,255,.25)"/>
+        <polygon points="50,5 62,35 96,35 69,56 79,90 50,69" fill="#00b4d8"/>
+      </svg>
+      <div class="hb"><h1>STERN</h1><p>Controle de Propostas</p></div>
+    </div>
+    <div class="hr">
+      <span class="dbadge">MODO TESTE</span>
+      <span class="ui" id="udsp"></span>
+      <button class="lout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nb active" id="nav-nova"    onclick="showPage('nova')">+ Nova Proposta</button>
+    <button class="nb"        id="nav-painel"  onclick="showPage('painel')">Painel de Propostas</button>
+    <button class="nb"        id="nav-backlog" onclick="showPage('backlog')">Backlog Projetado</button>
+    <button class="nb"        id="nav-dash"    onclick="showPage('dash')">Dashboard</button>
+    <button class="nb"        id="nav-config"  onclick="showPage('config')">Configurações</button>
+  </div>
+  <div class="content">
+
+    <!-- NOVA PROPOSTA -->
+    <div id="page-nova">
+      <div id="amsg" class="alert"></div>
+      <div class="nbox">
+        <div><div class="nlbl">Próximo número de proposta</div><div class="nval" id="nnum">—</div></div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--sg);margin-bottom:6px;font-weight:600">CRIAR REVISÃO</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="number" id="rbin" placeholder="Nº base" style="width:90px;padding:7px 10px;border-radius:var(--r);border:1.5px solid var(--se);font-size:13px">
+            <button class="btn sm pr" onclick="setRev()">Revisar</button>
+          </div>
+        </div>
+      </div>
+      <div class="rvbox" id="rvbox"><span>Revisão da proposta</span><strong id="rvnum"></strong><button class="btn sm" onclick="clrRev()" style="margin-left:auto">Cancelar</button></div>
+      <div class="card">
+        <div class="slbl">Dados Obrigatórios</div>
+        <div class="fg">
+          <div class="fi"><label>Contratante *</label><input type="text" id="fc" placeholder="Razão social"></div>
+          <div class="fi"><label>CNPJ <span class="otag">opcional</span></label><input type="text" id="fcnpj" placeholder="00.000.000/0000-00" oninput="mskCNPJ(this)" maxlength="18"></div>
+          <div class="fi"><label>Cliente Final *</label><input type="text" id="fcl" placeholder="Empresa cliente"></div>
+          <div class="fi"><label>Escopo *</label>
+            <select id="fes"><option value="">Selecione...</option>
+              <option>PINTURA INDUSTRIAL</option><option>ANDAIMES</option><option>LIMPEZA TÉCNICA</option>
+              <option>ISOLAMENTO TÉRMICO</option><option>MANUTENÇÃO</option><option>REFRATÁRIO</option>
+              <option>CIVIL</option><option>GELO SECO</option><option>ELETROMECÂNICA</option>
+              <option>LIMPEZA PREDIAL</option><option>JARDINAGEM</option><option>OUTROS</option>
+            </select></div>
+          <div class="fi"><label>Data *</label><input type="date" id="fdt"></div>
+          <div class="fi" style="grid-column:span 2"><label>Descrição *</label><input type="text" id="fde" placeholder="Descrição do serviço"></div>
+          <div class="fi"><label>Cidade *</label><input type="text" id="fci" placeholder="Cidade"></div>
+          <div class="fi"><label>UF *</label>
+            <select id="fuf"><option value="">UF...</option>
+              <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option>
+            </select></div>
+          <div class="fi"><label>Resultado *</label>
+            <select id="frs"><option value="">Selecione...</option>
+              <option>AG. DEFINIÇÃO</option><option>VENCIDA</option><option>PERDIDA</option>
+              <option>CANCELADA</option><option>SEM RETORNO</option><option>BUDGET</option><option>DECLINADA</option>
+            </select></div>
+          <div class="fi"><label>Gestor Comercial *</label><select id="fge"><option value="">Selecione...</option></select></div>
+          <div class="fi"><label>Segmento *</label>
+            <select id="fsg"><option value="">Selecione...</option>
+              <option>PETROQUÍMICA</option><option>ESTALEIRO E OFFSHORE</option><option>ALIMENTÍCIO E BEBIDAS</option>
+              <option>MINERAÇÃO</option><option>AUTO, MAQ E EQUIP</option><option>CIVIL</option>
+              <option>SIDERURGIA</option><option>INDÚSTRIA</option><option>QUÍMICA</option>
+              <option>CELULOSE E PAPEL</option><option>METALURGIA</option><option>OUTROS</option>
+            </select></div>
+          <div class="fi"><label>Valor Total (R$) *</label><input type="number" id="fvl" placeholder="0.00" step="0.01" min="0"></div>
+          <div class="fi"><label>Convite</label><input type="text" id="fcv" placeholder="N° / tipo"></div>
+        </div>
+        <div class="slbl" style="margin-top:20px">Complementares <span class="otag">opcionais</span></div>
+        <div class="fg">
+          <div class="fi"><label>OREX</label><select id="fox"><option value="">—</option><option>AJZ</option><option>BGB</option><option>DC</option><option>TLS</option><option>ALO</option><option>Outro</option></select></div>
+          <div class="fi"><label>Prazo</label><input type="number" id="fpr" placeholder="Qtd."></div>
+          <div class="fi"><label>Tipo</label><select id="ftp"><option value="">—</option><option>DIA</option><option>MÊS</option><option>MESES</option></select></div>
+          <div class="fi"><label>Projeto</label><select id="fpj"><option value="">—</option><option>LONGO PRAZO</option><option>SPOT</option><option>PARADA</option></select></div>
+          <div class="fi"><label>Nome Contato</label><input type="text" id="fnm" placeholder="Nome completo"></div>
+          <div class="fi"><label>Telefone</label><input type="text" id="fte" placeholder="(XX) XXXXX-XXXX"></div>
+          <div class="fi" style="grid-column:span 2"><label>E-mail</label><input type="email" id="fem" placeholder="contato@empresa.com"></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+          <button class="btn" onclick="clrForm()">Limpar</button>
+          <button class="btn pr" onclick="submitProp()">Gerar Proposta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAINEL -->
+    <div id="page-painel" style="display:none">
+      <div class="card">
+        <div class="ttbar">
+          <input type="text" id="gsrch" placeholder="Busca global..." oninput="renderTable()">
+          <select id="ftano" onchange="renderTable()">
+            <option value="">Todos os anos</option>
+            <option>2026</option><option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option>
+          </select>
+          <button class="btn" onclick="clearTableFilters()">Limpar filtros</button>
+          <button class="btn gr" onclick="expExcel()">⬇ Exportar Excel</button>
+          <button class="btn pr" onclick="openImp()">⬆ Importar Excel</button>
+        </div>
+        <div class="card" style="padding:14px 16px;margin-bottom:12px;background:#f8fbfe">
+          <div style="font-size:11px;font-weight:700;color:var(--sg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Filtros avançados do painel</div>
+          <div id="advFilters"></div>
+        </div>
+        <div class="twrap"><table><thead id="thd"></thead><tbody id="tbd"></tbody></table></div>
+        <div class="tfoot" id="tfoot"></div>
+      </div>
+    </div>
+
+    <!-- BACKLOG -->
+    <div id="page-backlog" style="display:none">
+      <div class="card">
+        <p style="font-size:13px;color:var(--sg);margin-bottom:14px">Probabilidade de ganho projetada. Propostas <strong>Vencidas</strong> têm 100% automaticamente.</p>
+        <div class="ttbar">
+          <input type="text" id="blsrch" placeholder="Busca..." oninput="renderBacklog()">
+          <select id="blges" onchange="renderBacklog()"><option value="">Todos gestores</option></select>
+          <select id="blres" onchange="renderBacklog()">
+            <option value="">Todos status</option>
+            <option>AG. DEFINIÇÃO</option><option>VENCIDA</option><option>PERDIDA</option>
+            <option>CANCELADA</option><option>SEM RETORNO</option><option>BUDGET</option><option>DECLINADA</option>
+          </select>
+          <button class="btn gr" onclick="expBacklog()">⬇ Exportar Excel</button>
+        </div>
+        <div class="twrap"><table><thead id="bl-thd"></thead><tbody id="bl-tbd"></tbody></table></div>
+        <div class="tfoot" id="bl-foot"></div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="page-dash" style="display:none">
+      <div class="dff" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+        <div><label>De</label><input type="date" id="ddf" onchange="renderDash()"></div>
+        <div><label>Até</label><input type="date" id="ddt" onchange="renderDash()"></div>
+        <div><label>Serviço</label><select id="ddes" onchange="renderDash()"><option value="">Todos</option>
+          <option>PINTURA INDUSTRIAL</option><option>ANDAIMES</option><option>LIMPEZA TÉCNICA</option>
+          <option>ISOLAMENTO TÉRMICO</option><option>MANUTENÇÃO</option><option>OUTROS</option>
+        </select></div>
+        <div><label>Gestor</label><select id="ddge" onchange="renderDash()"><option value="">Todos</option></select></div>
+        <div><label>Status</label><select id="ddst" onchange="renderDash()"><option value="">Todos</option>
+          <option>AG. DEFINIÇÃO</option><option>VENCIDA</option><option>PERDIDA</option>
+          <option>CANCELADA</option><option>SEM RETORNO</option><option>BUDGET</option><option>DECLINADA</option>
+        </select></div>
+        <div style="margin-left:auto"><button class="btn gr" onclick="downloadDashImg()" title="Baixar dashboard como imagem PNG">⬇ Baixar Imagem</button></div>
+      </div>
+      <div id="dash">
+      <div class="mg" id="dmets"></div>
+      <div class="cg">
+        <div class="cbox"><div class="ct">Funil de Vendas</div><div id="funnel"></div></div>
+        <div class="cbox"><div class="ct">Conversão por Gestor (%)</div><div class="cwrap"><canvas id="chconv"></canvas></div></div>
+      </div>
+      <div class="cg" style="margin-top:14px">
+        <div class="cbox"><div class="ct">Volume Orçado por Mês (R$ mi)</div><div class="cwrap"><canvas id="chmon"></canvas></div></div>
+        <div class="cbox"><div class="ct">Distribuição por Escopo</div><div class="cwrap"><canvas id="chesc"></canvas></div></div>
+      </div>
+      <div class="cg" style="margin-top:14px">
+        <div class="cbox"><div class="ct">Propostas por Segmento</div><div class="cwrap"><canvas id="chseg"></canvas></div></div>
+        <div class="cbox"><div class="ct">Status da Carteira</div><div class="cwrap"><canvas id="chst"></canvas></div></div>
+      </div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="page-config" style="display:none">
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--sg);text-transform:uppercase;letter-spacing:.08em;padding-bottom:10px;border-bottom:1px solid var(--se);margin-bottom:12px">Colunas Visíveis no Painel</div>
+        <ul class="cfl" id="colcfg"></ul>
+        <button class="btn pr" style="margin-top:12px" onclick="saveColCfg()">Salvar Colunas</button>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--sg);text-transform:uppercase;letter-spacing:.08em;padding-bottom:10px;border-bottom:1px solid var(--se);margin-bottom:12px">Gestores Comerciais</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input type="text" id="ngi" placeholder="Nome do gestor" style="flex:1;padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--se);font-size:13px">
+          <button class="btn pr" onclick="addGst()">Adicionar</button>
+        </div>
+        <div class="tagrow" id="gtags"></div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--sg);text-transform:uppercase;letter-spacing:.08em;padding-bottom:10px;border-bottom:1px solid var(--se);margin-bottom:12px">Status de Negociação</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input type="text" id="nsi" placeholder="Nome do status" style="flex:1;padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--se);font-size:13px">
+          <button class="btn pr" onclick="addSts()">Adicionar</button>
+        </div>
+        <div class="tagrow" id="stags"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="mov" id="imp-modal" style="display:none" onclick="if(event.target===this)closeImp()">
+  <div class="modal">
+    <div class="mhdr"><h2>Importar Propostas — Excel</h2><button class="mcls" onclick="closeImp()">×</button></div>
+    <div class="mbdy">
+      <div class="dz" id="dzone" onclick="document.getElementById('fimp').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--sb)'"
+        ondragleave="this.style.borderColor=''"
+        ondrop="handleDrop(event)">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#5a7a90" stroke-width="1.5"><path d="M19 14v5a2 2 0 01-2 2H7a2 2 0 01-2-2v-5M12 3v11M8 7l4-4 4 4"/></svg>
+        <p>Arraste o arquivo ou <strong style="color:var(--sb)">clique para selecionar</strong></p>
+        <span>Formatos: .xlsx, .xls — Aba: PROPOSTAS ou PROPOSTA</span>
+        <input type="file" id="fimp" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+      </div>
+      <div id="iprev" style="display:none;margin-top:14px">
+        <div class="isum" id="isum"></div>
+        <div style="font-size:12px;font-weight:700;color:var(--sg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Modo</div>
+        <div class="mdbtn">
+          <div class="mbtn sel" id="md-add" onclick="selMode('add')"><b>➕ Adicionar</b><small>Mantém dados atuais e acrescenta novos</small></div>
+          <div class="mbtn" id="md-replace" onclick="selMode('replace')"><b>🔄 Substituir</b><small>Apaga tudo e importa só o arquivo</small></div>
+          <div class="mbtn" id="md-update" onclick="selMode('update')"><b>🔁 Atualizar</b><small>Atualiza os existentes pelo Nº</small></div>
+        </div>
+        <div class="pw"><table><thead id="pvhd"></thead><tbody id="pvbd"></tbody></table></div>
+        <div class="iwrn" id="iwrn"></div>
+        <div class="iok"  id="iok"></div>
+      </div>
+    </div>
+    <div class="mftr">
+      <button class="btn" onclick="closeImp()">Cancelar</button>
+      <button class="btn pr" id="doimp" disabled onclick="doImport()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="app_fixed.js"></script>
+</body>
+</html>
