@@ -261,7 +261,7 @@ function renderTable(){
         const cls=v==='VENCIDA'?'venc':v==='PERDIDA'?'perd':'';
         bh+=`<td><select class="${cls}" onchange="editRow('${row._id}','${c.key}',this.value);updResColor(this)">${cfg.statusList.map(s=>`<option ${v===s?'selected':''}>${s}</option>`).join('')}</select></td>`;
       }else if(c.key==='valor'){
-        bh+=`<td style="text-align:right;font-weight:600">R$ ${fmtBRL(row.valor)}</td>`;
+        bh+=`<td style="text-align:right"><input type="number" step="0.01" min="0" value="${row.valor||0}" style="text-align:right;font-weight:600;width:120px" onchange="editRow('${row._id}','valor',this.value)"></td>`;
       }else if(c.key==='data'){
         bh+=`<td>${fmtDate(row.data)}</td>`;
       }else{
